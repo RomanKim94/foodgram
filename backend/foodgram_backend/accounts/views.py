@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from .paginators import UserCustomPaginator
 from .serializers import (
     AvatarUpdateSerializer,
-    SubscriptionSerializer, UserSerializer,
+    SubscriptionSerializer,
+    UserSerializer,
 )
 
 User = get_user_model()
