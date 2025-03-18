@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from accounts import models
+from .models import User
 
 
-@admin.register(models.User)
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'username', 'first_name', 'last_name')
     search_fields = ('email', 'first_name')

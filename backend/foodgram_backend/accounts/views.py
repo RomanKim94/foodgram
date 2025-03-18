@@ -1,15 +1,14 @@
-from rest_framework.response import Response
+from django.contrib.auth import get_user_model
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.contrib.auth import get_user_model
+from rest_framework.response import Response
 
-from accounts.paginators import UserCustomPaginator
-from accounts.serializers import (
+from .paginators import UserCustomPaginator
+from .serializers import (
     AvatarUpdateSerializer,
     SubscriptionSerializer, UserSerializer,
 )
-
 
 User = get_user_model()
 

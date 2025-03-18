@@ -1,11 +1,11 @@
-from io import BytesIO
 from distutils.util import strtobool
 from django.db.models import (
-    BooleanField, Exists, OuterRef, Value,
-    prefetch_related_objects, Q,
+    BooleanField, Exists, OuterRef,
+    prefetch_related_objects, Q, Value,
 )
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from io import BytesIO
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
@@ -13,10 +13,10 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from recipes.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
-from recipes.permissions import IsAuthor
-from recipes.serializers import (
-    IngredientSerializer, RecipeSerializer, RecipePreviewSerializer,
+from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from .permissions import IsAuthor
+from .serializers import (
+    IngredientSerializer, RecipePreviewSerializer, RecipeSerializer,
     ShortLinkSerializer, TagSerializer
 )
 

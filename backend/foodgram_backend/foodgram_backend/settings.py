@@ -1,8 +1,7 @@
-import os
-from pathlib import Path
-
 from distutils.util import strtobool
 from dotenv import load_dotenv
+import os
+from pathlib import Path
 
 load_dotenv(dotenv_path='../../.env')
 

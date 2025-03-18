@@ -1,8 +1,8 @@
 from django.urls import include, path, re_path
-from rest_framework import routers
 from djoser import views
-from accounts.views import UserViewSet
+from rest_framework import routers
 
+from .views import UserViewSet
 
 router = routers.SimpleRouter()
 router.register('', UserViewSet)

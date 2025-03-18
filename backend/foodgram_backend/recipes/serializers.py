@@ -1,9 +1,9 @@
 import base64
-import random
-import string
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
+import random
 from rest_framework import serializers
+import string
 from urllib.parse import urljoin
 
 from accounts.serializers import UserSerializer
