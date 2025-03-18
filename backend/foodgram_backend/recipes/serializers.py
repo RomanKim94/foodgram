@@ -7,9 +7,9 @@ from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
+from . import constants as const
+from .models import Ingredient, IngredientInRecipe, Recipe, Tag
 from accounts.serializers import UserSerializer
-from recipes import constants as const
-from recipes.models import Ingredient, IngredientInRecipe, Recipe, Tag
 
 
 class TagSerializer(serializers.ModelSerializer):

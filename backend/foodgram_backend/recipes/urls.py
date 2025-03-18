@@ -2,11 +2,7 @@ from django.urls import include, path
 from rest_framework import routers
 
 from . import constants as const
-from .views import (
-    IngredientViewSet,
-    RecipeViewSet,
-    TagViewSet,
-)
+from .views import IngredientViewSet, RecipeViewSet, TagViewSet
 
 router = routers.SimpleRouter()
 router.register('tags', TagViewSet)
