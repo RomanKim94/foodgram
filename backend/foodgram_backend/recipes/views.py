@@ -1,30 +1,20 @@
 from distutils.util import strtobool
 from io import BytesIO
 
-from django.db.models import (
-    BooleanField,
-    Exists,
-    OuterRef,
-    Q,
-    Value,
-    prefetch_related_objects,
-)
+from django.db.models import (BooleanField, Exists, OuterRef, Q, Value,
+                              prefetch_related_objects)
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
 from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from .permissions import IsAuthor
-from .serializers import (
-    IngredientSerializer, RecipePreviewSerializer, RecipeSerializer,
-    ShortLinkSerializer, TagSerializer
-)
+from .serializers import (IngredientSerializer, RecipePreviewSerializer,
+                          RecipeSerializer, ShortLinkSerializer, TagSerializer)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
