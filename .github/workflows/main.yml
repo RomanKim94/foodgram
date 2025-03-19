@@ -74,6 +74,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
+        cache: 'npm'
+    - name: Check Node.js version
+      run: node -v
     - name: Install dependencies
       run: |
         cd frontend/
