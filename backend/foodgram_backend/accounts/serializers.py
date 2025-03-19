@@ -28,11 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name': {'required': True},
         }
 
-    def create(self, validated_data):
-        password = validated_data.pop('password', None)
-        user = User.objects.create_user(password=password, **validated_data)
-        return user
-
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
