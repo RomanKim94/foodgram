@@ -35,7 +35,7 @@ services:
     depends_on:
       - db
     ports:
-      - 9090:8000
+      - 8000:8000
   db:
     image: postgres:13
     env_file: ../.env
