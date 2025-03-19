@@ -2,7 +2,12 @@ from distutils.util import strtobool
 from io import BytesIO
 
 from django.db.models import (
-    BooleanField, Exists, OuterRef, Q, Value, prefetch_related_objects
+    BooleanField,
+    Exists,
+    OuterRef,
+    Q,
+    Value,
+    prefetch_related_objects,
 )
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
