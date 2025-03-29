@@ -1,19 +1,11 @@
-from django.urls import include, path
-from rest_framework import routers
+from django.urls import path
 
-from . import constants as const
-from .views import IngredientViewSet, RecipeViewSet, TagViewSet
-
-router = routers.SimpleRouter()
-router.register('tags', TagViewSet)
-router.register('recipes', RecipeViewSet)
-router.register('ingredients', IngredientViewSet)
-
+from api.views import RecipeViewSet
 
 urlpatterns = [
-    path('', include(router.urls)),
     path(
-        f'{const.SHORT_LINK_SIGN}/<str:url_slug>/',
-        RecipeViewSet.as_view({'get': 'retrieve'}),
-    )
+        '<int:recipe_id>/',
+        RecipeViewSet.as_view({'get': 'retrieve'},),
+        name='short_link'
+    ),
 ]

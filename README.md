@@ -13,7 +13,7 @@ IP сервера: 84.201.140.180
 
 
 ## Как развернуть проект локально
-1. Склонируйте репозиторий и перейдите в корневую диркуторию проекта:
+1. Склонируйте репозиторий и перейдите в корневую директорию проекта:
 ```
 git clone https://github.com/RomanKim94/foodgram.git
 cd foodgram
@@ -43,7 +43,25 @@ docker compose exec foodgram-backend python manage.py migrate
 docker compose exec foodgram-backend python manage.py createsuperuser
 ```
 Укажите логин, email (обязательно), логин (обязательно) и пароль (потребуется ввести дважды).  
-После разворачивания проекта, сервис будет доступен по адресу http://localhost:80.
+После разворачивания проекта, сервис будет доступен по адресу [ссылка](http://localhost:80).
+
+## Как развернуть бекенд без докера  
+После клонирования репозитория и настройки переменных окружения в файле `.env` выполните следующее.
+
+### Из директории foodgram_backend:  
+Выполните миграции:
+```
+python manage.py migrate
+```
+Заполните БД с помощью подготовленных файлов:
+```
+python manage.py import_ingredients api/data/ingredients.json
+python manage.py import_tags api/data/tags.json
+```
+Запустите сервер:
+```
+python manage.py runserver
+```
 
 ## Автор:
 ### [Ким Роман](https://github.com/RomanKim94)
