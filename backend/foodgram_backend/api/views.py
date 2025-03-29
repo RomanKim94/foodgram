@@ -8,14 +8,13 @@ from django.urls import reverse
 from django.utils import timezone
 from django_filters import rest_framework as filterset
 from djoser import views
+from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-
-from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
-                            ShoppingCart, Tag)
 
 from .filters import ProductFilter, RecipeFilter
 from .paginators import UserPaginator

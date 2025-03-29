@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count, Q
 from django_filters import rest_framework as filters
-
 from recipes.models import Product, Recipe
 
 from .constants import (MEDIUM_COOKING_DURATION_LIMIT,

@@ -1,9 +1,8 @@
+from api import constants as const
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MinValueValidator
 from django.db import models
-
-from api import constants as const
 
 
 class User(AbstractUser):
