@@ -147,7 +147,9 @@ class ProductFilter(filters.FilterSet):
 class RecipeFilter(filters.FilterSet):
     is_favorited = filters.BooleanFilter(method='filter_is_favorited')
     tags = tags = filters.CharFilter(method='filter_tags')
-    is_in_shopping_cart = filters.BooleanFilter(method='filter_is_in_shopping_cart')
+    is_in_shopping_cart = filters.BooleanFilter(
+        method='filter_is_in_shopping_cart'
+    )
 
     class Meta:
         model = Recipe
@@ -167,7 +169,7 @@ class RecipeFilter(filters.FilterSet):
                 q_objects |= Q(tags__slug=tag_slug)
             return queryset.filter(q_objects).distinct()
         return queryset
-    
+
     def filter_is_in_shopping_cart(self, queryset, field_name, value):
         if value:
             return queryset.filter(is_in_shopping_cart=True)
