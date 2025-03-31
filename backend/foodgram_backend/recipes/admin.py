@@ -6,8 +6,8 @@ from django.utils.safestring import mark_safe
 from .filters import (CookingTimeFilter, FollowersExistListFilter,
                       FollowsExistListFilter, IsProductInRecipesFilter,
                       RecipesExistListFilter)
-from .models import (Favorite, Ingredient, Product, Recipe,
-                     ShoppingCart, Tag, User)
+from .models import (Favorite, Ingredient, Product, Recipe, ShoppingCart, Tag,
+                     User)
 
 site.unregister(Group)
 

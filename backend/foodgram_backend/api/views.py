@@ -2,9 +2,9 @@ from django.contrib.auth import get_user_model
 from django.db.models import (BooleanField, Exists, F, OuterRef, Prefetch, Sum,
                               Value)
 from django.http import FileResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters import rest_framework as filterset
-from django.shortcuts import get_object_or_404
 from djoser import views
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
