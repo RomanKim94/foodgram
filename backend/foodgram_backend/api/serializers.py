@@ -3,7 +3,7 @@ from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Product, Recipe, Tag
+from foodgram_backend.recipes.models import Ingredient, Product, Recipe, Tag
 
 User = get_user_model()
 
