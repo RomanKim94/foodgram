@@ -13,10 +13,8 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from foodgram_backend.recipes.models import (Favorite, Follow, Ingredient,
-                                             Product, Recipe, ShoppingCart,
-                                             Tag)
-
+from ..recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
+                              ShoppingCart, Tag)
 from .filters import ProductFilter, RecipeFilter
 from .paginators import UserPaginator
 from .permissions import IsAuthorOrReadOnly
