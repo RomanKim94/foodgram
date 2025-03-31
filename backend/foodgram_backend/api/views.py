@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.db.models import (BooleanField, Exists, F, OuterRef, Prefetch, Sum,
-                              Value)
+from django.db.models import (
+    BooleanField, Exists, F, OuterRef,
+    Prefetch, Sum, Value
+)
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -9,20 +11,26 @@ from djoser import views
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (
+    AllowAny, IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 
-from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
-                            ShoppingCart, Tag)
+from recipes.models import (
+    Favorite, Follow, Ingredient, Product,
+    Recipe, ShoppingCart, Tag,
+)
 from .filters import ProductFilter, RecipeFilter
 from .paginators import UserPaginator
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (AvatarUpdateSerializer, ProductSerializer,
-                          RecipeCreateUpdateSerializer,
-                          RecipePreviewSerializer, RecipeReadSerializer,
-                          SubscriptionSerializer, TagSerializer,
-                          UserSerializer)
+from .serializers import (
+    AvatarUpdateSerializer, ProductSerializer,
+    RecipeCreateUpdateSerializer,
+    RecipePreviewSerializer, RecipeReadSerializer,
+    SubscriptionSerializer, TagSerializer,
+    UserSerializer,
+)
 from .utils import generate_ingredients_file_content
 
 User = get_user_model()
@@ -64,22 +72,27 @@ class AccountViewSet(views.UserViewSet):
     def subscribe(self, request, **kwargs):
         follower = request.user
         author = self.get_object()
-        if not (
-            isinstance(author, User)
-            and follower != author
-            and not follower.followers.filter(author=author).exists()
-        ):
-            raise ValidationError('Указан невалидный пользователь')
-        if request.method == 'POST':
-            follow = Follow.objects.create(follower=follower, follow=author)
-            follow.save()
-            serializer = SubscriptionSerializer(
+        if request.method == 'DELETE':
+            get_object_or_404(
+                Follow, follower=follower, author=author
+            ).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        if follower == author:
+            raise ValidationError(
+                'Пользователь не может подписаться сам на себя'
+            )
+        _, created = Follow.objects.get_or_create(
+            follower=follower, author=author
+        )
+        if not created:
+            raise ValidationError('Такая подписка уже существует')
+        return Response(
+            SubscriptionSerializer(
                 author,
                 context={'request': request},
-            )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        get_object_or_404(Follow, follower=follower, author=author).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            ).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(
         detail=False,
@@ -88,11 +101,10 @@ class AccountViewSet(views.UserViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def subscriptions(self, request):
-        page = self.paginate_queryset(
-            User.objects.filter(followers__follower=request.user)
-        )
         return self.get_paginated_response(self.get_serializer(
-            page,
+            self.paginate_queryset(
+                User.objects.filter(followers__follower=request.user)
+            ),
             many=True,
             context={'request': request},
         ).data)
@@ -161,7 +173,8 @@ class RecipeViewSet(
         url_path='get-link',
     )
     def get_link(self, request, recipe_id):
-        get_object_or_404(Recipe, pk=recipe_id)
+        if not Recipe.objects.filter(pk=recipe_id).exists():
+            raise ValidationError(f'Рецепта с {recipe_id=} не существует')
         return Response(
             {
                 'short-link': request.build_absolute_uri(
@@ -180,7 +193,12 @@ class RecipeViewSet(
             recipe=recipe,
         )
         if not created:
-            raise ValidationError('Указан невалидный рецепт')
+            raise ValidationError(
+                'Рецепт {recipe} уже добавлен в {collection}'.format(
+                    recipe=recipe,
+                    collection=collection_model._meta.verbose_name_plural,
+                )
+            )
         return Response(
             self.get_serializer(recipe).data,
             status=status.HTTP_201_CREATED
@@ -223,10 +241,10 @@ class RecipeViewSet(
     def shopping_cart(self, request, *args, **kwargs):
         return self.manage_recipe_collection(ShoppingCart)
 
-    def get_combined_ingredients(self, user_id):
+    def get_combined_ingredients(self, user):
         shopping_carts = (
             ShoppingCart.objects
-            .filter(user_id=user_id)
+            .filter(user=user)
             .select_related('recipe', 'recipe__author')
             .prefetch_related(
                 Prefetch(
@@ -236,25 +254,16 @@ class RecipeViewSet(
             )
         )
         recipe_ids = shopping_carts.values_list('recipe_id', flat=True)
-        ingredients_summary = sorted(
-            Ingredient.objects
-            .filter(recipes__in=recipe_ids)
-            .values(
-                product_name=F('product__name'),
-                unit=F('product__measurement_unit')
-            )
-            .annotate(total=Sum('amount')),
-            key=lambda product: product['product_name'],
-        )
-        products_dict = {
-            (item['product_name'], item['unit']): item['total']
-            for item in ingredients_summary
-        }
-        return (
-            products_dict, [
-                f'{cart.recipe.name} (Автор: {cart.recipe.author.username})'
-                for cart in shopping_carts
-            ]
+        ingredients = Ingredient.objects.filter(
+            recipes__in=recipe_ids,
+        ).values(
+            product_name=F('product__name'),
+            unit=F('product__measurement_unit'),
+        ).annotate(
+            total=Sum('amount')
+        ).order_by('product__name')
+        return ingredients, Recipe.objects.filter(
+            shoppingcarts__in=shopping_carts.values_list('id', flat=True)
         )
 
     @action(
@@ -263,12 +272,11 @@ class RecipeViewSet(
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request, *args, **kwargs):
-        products, recipes = self.get_combined_ingredients(
-            user_id=self.request.user.pk
-        )
         return FileResponse(
             generate_ingredients_file_content(
-                products, recipes
+                self.get_combined_ingredients(
+                    user=self.request.user
+                )
             ),
             as_attachment=True,
             filename='shopping_cart.txt',

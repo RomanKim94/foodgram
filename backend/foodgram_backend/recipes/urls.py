@@ -1,13 +1,11 @@
 from django.urls import path
-from django.views.generic.base import RedirectView
+
+from .views import short_link_reverse
 
 urlpatterns = [
     path(
-        's/<int:pk>/',
-        RedirectView.as_view(
-            pattern_name='api:recipe-detail',
-            permanent=False
-        ),
+        's/<int:recipe_id>/',
+        short_link_reverse,
         name='short_link',
     ),
 ]

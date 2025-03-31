@@ -31,7 +31,6 @@ class RecipeFilter(filters.FilterSet):
         tags = self.request.query_params.getlist('tags')
         if not tags:
             return recipes
-        print(tags)
         recipes.prefetch_related('tags__slug')
         return recipes.filter(tags__slug__in=tags).distinct()
 

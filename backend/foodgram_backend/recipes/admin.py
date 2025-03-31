@@ -3,11 +3,15 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 
-from .filters import (CookingTimeFilter, FollowersExistListFilter,
-                      FollowsExistListFilter, IsProductInRecipesFilter,
-                      RecipesExistListFilter)
-from .models import (Favorite, Ingredient, Product, Recipe, ShoppingCart, Tag,
-                     User)
+from .filters import (
+    CookingTimeFilter, FollowersExistListFilter,
+    FollowsExistListFilter, IsProductInRecipesFilter,
+    RecipesExistListFilter
+)
+from .models import (
+    Favorite, Ingredient, Product, Recipe,
+    ShoppingCart, Tag, User,
+)
 
 site.unregister(Group)
 
@@ -58,12 +62,10 @@ class RecipeUserAdmin(RecipeCountMixin, UserAdmin):
     @display(description='Аватар')
     @mark_safe
     def avatar_image(self, user):
-        if user.avatar:
-            return (
-                f'<img src="{user.avatar.url}" width="50" '
-                'height="50" style="object-fit: cover;" />'
-            )
-        return ''
+        return (
+            f'<img src="{user.avatar.url}" width="50" '
+            'height="50" style="object-fit: cover;" />'
+        ) if user.avatar else ''
 
     @display(description='Подписчиков')
     def followers_count(self, author):
@@ -82,11 +84,15 @@ class TagAdmin(RecipeCountMixin, ModelAdmin):
 
 
 @register(Product)
-class ProductAdmin(RecipeCountMixin, ModelAdmin):
+class ProductAdmin(ModelAdmin):
     list_display = ('name', 'measurement_unit', 'recipes_count')
     search_fields = ('name', 'measurement_unit')
     filter_field = 'measurement_unit'
     list_filter = (IsProductInRecipesFilter, )
+
+    @display(description='Рецептов')
+    def recipes_count(self, product):
+        return Recipe.objects.filter(ingredients__product=product).count()
 
 
 @register(Ingredient)
@@ -109,38 +115,36 @@ class RecipeAdmin(ModelAdmin):
     list_filter = (CookingTimeFilter, 'tags', 'author')
     list_display_links = ('name', )
 
-    @display(description='Количество добавлений в избранное')
+    @display(description='В избранном')
     def favorited_count(self, recipe):
         return recipe.favorites.count()
 
     @display(description='Продукты')
     @mark_safe
     def products(self, recipe):
-        return '<p>' + ''.join(
+        return '<br />'.join(
             f'{ingredient.product.name}, '
             f'{ingredient.product.measurement_unit} - '
-            f'{ingredient.amount}<br />'
+            f'{ingredient.amount}'
             for ingredient in recipe.ingredients.all(
             ).select_related('product')
-        ) + '</p>'
+        )
 
     @display(description='Теги')
     @mark_safe
     def recipe_tags(self, recipe):
-        return '<p>' + ''.join(
-            f'<li>{tag.name}</li>'
+        return '<br />'.join(
+            f'{tag.name}'
             for tag in recipe.tags.all()
-        ) + '</p>'
+        )
 
     @display(description='Картинка')
     @mark_safe
     def recipe_image(self, recipe):
-        if recipe.image:
-            return (
-                f'<img src="{recipe.image.url}" width="50" '
-                'height="50" style="object-fit: cover;" />'
-            )
-        return ''
+        return (
+            f'<img src="{recipe.image.url}" width="50" '
+            'height="50" style="object-fit: cover;" />'
+        ) if recipe.image else ''
 
 
 @register(Favorite, ShoppingCart)

@@ -3,6 +3,7 @@ from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
+from recipes.constants import COOKING_TIME_MIN_VALUE
 from recipes.models import Ingredient, Product, Recipe, Tag
 
 User = get_user_model()
@@ -92,25 +93,21 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class IngredientWriteSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(),
+    )
 
     class Meta:
         model = Ingredient
         fields = ('id', 'amount')
 
-    def validate(self, attrs):
-        if not Product.objects.filter(id=attrs['id']).exists():
-            raise serializers.ValidationError(
-                'Указанного продукта не существует.'
-            )
-        if attrs['amount'] < 1:
-            raise serializers.ValidationError(
-                'Укажите значение больше 0'
-            )
-        return super().validate(attrs)
+    def to_representation(self, instance):
+        return IngredientReadSerializer(
+            context=self.context
+        ).to_representation(instance)
 
 
-class IngredientReadSerializer(IngredientWriteSerializer):
+class IngredientReadSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='product.id')
     name = serializers.CharField(source='product.name')
     measurement_unit = serializers.CharField(source='product.measurement_unit')
@@ -118,13 +115,17 @@ class IngredientReadSerializer(IngredientWriteSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'amount', 'name', 'measurement_unit')
+        read_only_fields = fields
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     ingredients = IngredientReadSerializer(many=True)
-    is_favorited = serializers.BooleanField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(read_only=True)
+    is_favorited = serializers.BooleanField(read_only=True, default=False)
+    is_in_shopping_cart = serializers.BooleanField(
+        read_only=True,
+        default=False,
+    )
     tags = TagSerializer(many=True)
 
     class Meta:
@@ -146,7 +147,7 @@ class RecipeCreateUpdateSerializer(RecipeReadSerializer):
         allow_null=False,
     )
     ingredients = IngredientWriteSerializer(many=True)
-    cooking_time = serializers.IntegerField(min_value=1)
+    cooking_time = serializers.IntegerField(min_value=COOKING_TIME_MIN_VALUE)
 
     class Meta():
         model = Recipe
@@ -154,6 +155,11 @@ class RecipeCreateUpdateSerializer(RecipeReadSerializer):
             'ingredients', 'tags', 'image',
             'name', 'text', 'cooking_time', 'author',
         )
+
+    def to_representation(self, instance):
+        return RecipeReadSerializer(
+            context=self.context
+        ).to_representation(instance)
 
     def validate_image(self, value):
         if not value:
@@ -176,39 +182,31 @@ class RecipeCreateUpdateSerializer(RecipeReadSerializer):
 
     def validate(self, attrs):
         ingredient_ids = [
-            i.get('product').get('id') for i in attrs['ingredients']
+            ingredient.get('id')
+            for ingredient in attrs['ingredients']
         ]
-        tags_ids = [i.id for i in attrs['tags']]
+        tags_ids = [tag.id for tag in attrs['tags']]
         self.validate_field_values(Product, ingredient_ids, 'ingredients')
         self.validate_field_values(Tag, tags_ids, 'tags')
         return super().validate(attrs)
 
     def set_ingredients(self, recipe, ingredients_data):
-        ingredients = []
-        for ingredient in ingredients_data:
-            ingredients.append(Ingredient(
-                product_id=ingredient['product']['id'],
+        Ingredient.objects.bulk_create([
+            Ingredient(
+                product=ingredient['id'],
                 amount=ingredient['amount'],
-            ))
-        ingredients = Recipe.objects.bulk_create(ingredients)
-        recipe.ingredients.set(ingredients)
+                recipe=recipe,
+            ) for ingredient in ingredients_data
+        ])
 
     def update(self, instance: Recipe, validated_data):
-        for field in self.Meta.fields:
-            if field not in ('ingredients', 'tags'):
-                setattr(
-                    instance, field, validated_data.get(
-                        field, getattr(instance, field)
-                    )
-                )
         instance.ingredients.clear()
         self.set_ingredients(
             instance,
             ingredients_data=validated_data.pop('ingredients')
         )
         instance.tags.clear()
-        tags = validated_data.pop('tags')
-        instance.tags.set(tags)
+        instance.tags.set(validated_data.pop('tags'))
         return super().update(
             instance,
             validated_data,

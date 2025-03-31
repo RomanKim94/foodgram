@@ -32,9 +32,9 @@ class Command(BaseCommand):
                 f'Успешно загружено {created_ingredient_count} '
                 f'{self.model._meta.verbose_name_plural}'
             )
-        except Exception as exep:
+        except Exception as exception:
             self.stdout.write(
                 f'Во время импорта {self.model._meta.verbose_name_plural} '
                 f'из файла {file_path}'
-                f'произошла ошибка: {exep}'
+                f'произошла ошибка: {exception}'
             )

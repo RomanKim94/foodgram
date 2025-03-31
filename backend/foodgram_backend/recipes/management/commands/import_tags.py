@@ -1,6 +1,6 @@
 from recipes.models import Tag
 
-from .base_command_mixin import Command
+from .base_command import Command
 
 
 class Command(Command):

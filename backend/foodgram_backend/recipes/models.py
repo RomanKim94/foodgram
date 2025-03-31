@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MinValueValidator
 from django.db import models
+
+from .constants import INGREDIENT_AMOUNT_MIN_VALUE, COOKING_TIME_MIN_VALUE
 
 
 class User(AbstractUser):
@@ -9,7 +12,7 @@ class User(AbstractUser):
         verbose_name='Никнейм',
         max_length=150,
         unique=True,
-        validators=[AbstractUser.username_validator],
+        validators=[UnicodeUsernameValidator],
     )
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
@@ -114,8 +117,13 @@ class Ingredient(models.Model):
     amount = models.IntegerField(
         verbose_name='Количество',
         validators=(
-            MinValueValidator(1),
+            MinValueValidator(INGREDIENT_AMOUNT_MIN_VALUE),
         )
+    )
+    recipe = models.ForeignKey(
+        'Recipe',
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
     )
 
     def __str__(self):
@@ -145,9 +153,10 @@ class Recipe(models.Model):
     text = models.TextField(
         verbose_name='Описание',
     )
-    ingredients = models.ManyToManyField(
-        Ingredient,
+    products = models.ManyToManyField(
+        Product,
         verbose_name='Ингридиенты и их количество',
+        through=Ingredient
     )
     tags = models.ManyToManyField(
         Tag,
@@ -156,7 +165,7 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления в минутах',
         validators=(
-            MinValueValidator(1),
+            MinValueValidator(COOKING_TIME_MIN_VALUE),
         ),
     )
     pub_date = models.DateTimeField(
@@ -201,6 +210,7 @@ class CollectionBaseModel(models.Model):
             )
         ]
         abstract = True
+        default_related_name = '%(class)ss'
 
 
 class Favorite(CollectionBaseModel):
@@ -208,7 +218,6 @@ class Favorite(CollectionBaseModel):
     class Meta(CollectionBaseModel.Meta):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
-        default_related_name = 'favorites'
 
 
 class ShoppingCart(CollectionBaseModel):
@@ -216,4 +225,3 @@ class ShoppingCart(CollectionBaseModel):
     class Meta(CollectionBaseModel.Meta):
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-        default_related_name = 'shopping_carts'
