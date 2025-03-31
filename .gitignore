@@ -2,6 +2,7 @@ frontend/node_modules
 infra/frontend/build
 .env
 infra/docker-compose.yml
+collected_static/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

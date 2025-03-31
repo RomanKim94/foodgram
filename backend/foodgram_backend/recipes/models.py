@@ -1,19 +1,15 @@
-from api import constants as const
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 
 
 class User(AbstractUser):
 
-    username_validator = UnicodeUsernameValidator()
-
     username = models.CharField(
         verbose_name='Никнейм',
         max_length=150,
         unique=True,
-        validators=[username_validator],
+        validators=[AbstractUser.username_validator],
     )
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
@@ -40,7 +36,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     def __str__(self):
-        return self.first_name
+        return self.username
 
     class Meta:
         ordering = ('username',)
@@ -49,16 +45,16 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='follows',
-        verbose_name='Подписчик',
-    )
-    follow = models.ForeignKey(
+    follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='followers',
+        verbose_name='Подписчик',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='authors',
         verbose_name='Пользователь на которого подписались',
     )
 
@@ -118,9 +114,7 @@ class Ingredient(models.Model):
     amount = models.IntegerField(
         verbose_name='Количество',
         validators=(
-            MinValueValidator(
-                const.INGREDIENT_AMOUNT_MIN_VALUE,
-            ),
+            MinValueValidator(1),
         )
     )
 

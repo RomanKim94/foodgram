@@ -2,10 +2,11 @@ import json
 import os
 
 from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.db.models import Model
 
 
-class CommandMixin:
+class Command(BaseCommand):
     model: Model = None
 
     def add_arguments(self, parser):
@@ -23,19 +24,17 @@ class CommandMixin:
             with open(full_file_path, 'r', encoding='utf-8') as file:
                 created_ingredient_count = len(
                     self.model.objects.bulk_create(
-                        [self.model(**item)
-                         for item in json.load(file)],
+                        (self.model(**item) for item in json.load(file)),
                         ignore_conflicts=True,
                     )
                 )
-        except FileNotFoundError:
-            self.stdout.write(f'Файл {file_path} не найден.')
-        except Exception as exep:
-            self.stdout.write(
-                f'Во время импорта ингредиентов произошла ошибка: {exep}'
-            )
-        else:
             self.stdout.write(
                 f'Успешно загружено {created_ingredient_count} '
                 f'{self.model._meta.verbose_name_plural}'
+            )
+        except Exception as exep:
+            self.stdout.write(
+                f'Во время импорта {self.model._meta.verbose_name_plural} '
+                f'из файла {file_path}'
+                f'произошла ошибка: {exep}'
             )

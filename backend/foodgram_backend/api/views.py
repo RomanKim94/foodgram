@@ -1,20 +1,20 @@
-from io import BytesIO
-
 from django.contrib.auth import get_user_model
 from django.db.models import (BooleanField, Exists, F, OuterRef, Prefetch, Sum,
                               Value)
 from django.http import FileResponse
 from django.urls import reverse
-from django.utils import timezone
 from django_filters import rest_framework as filterset
+from django.shortcuts import get_object_or_404
 from djoser import views
-from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+
+from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
+                            ShoppingCart, Tag)
 
 from .filters import ProductFilter, RecipeFilter
 from .paginators import UserPaginator
@@ -24,11 +24,12 @@ from .serializers import (AvatarUpdateSerializer, ProductSerializer,
                           RecipePreviewSerializer, RecipeReadSerializer,
                           SubscriptionSerializer, TagSerializer,
                           UserSerializer)
+from .utils import generate_ingredients_file_content
 
 User = get_user_model()
 
 
-class UserViewSet(views.UserViewSet):
+class AccountViewSet(views.UserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = UserPaginator
@@ -62,31 +63,24 @@ class UserViewSet(views.UserViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def subscribe(self, request, **kwargs):
-        user = request.user
+        follower = request.user
         author = self.get_object()
+        if not (
+            isinstance(author, User)
+            and follower != author
+            and not follower.followers.filter(author=author).exists()
+        ):
+            raise ValidationError('Указан невалидный пользователь')
         if request.method == 'POST':
-            if not (
-                isinstance(author, User)
-                and user != author
-                and not user.follows.filter(follow=author).exists()
-            ):
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            follow = Follow.objects.create(user=user, follow=author)
+            follow = Follow.objects.create(follower=follower, follow=author)
             follow.save()
             serializer = SubscriptionSerializer(
                 author,
                 context={'request': request},
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
-            if not (
-                isinstance(author, User)
-                and user != author
-                and user.follows.filter(follow=author).exists()
-            ):
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            Follow.objects.filter(user=user, follow=author).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        get_object_or_404(Follow, follower=follower, author=author).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -95,14 +89,14 @@ class UserViewSet(views.UserViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def subscriptions(self, request):
-        follows = User.objects.filter(followers__user=request.user)
-        page = self.paginate_queryset(follows)
-        serializer = self.get_serializer(
+        page = self.paginate_queryset(
+            User.objects.filter(followers__follower=request.user)
+        )
+        return self.get_paginated_response(self.get_serializer(
             page,
             many=True,
             context={'request': request},
-        )
-        return self.get_paginated_response(serializer.data)
+        ).data)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -112,13 +106,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
     filter_backends = (filterset.DjangoFilterBackend,)
     filterset_class = ProductFilter
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        searched_name = self.request.query_params.get('name', None)
-        if searched_name:
-            queryset = queryset.filter(name__istartswith=searched_name)
-        return queryset
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -140,10 +127,10 @@ class RecipeViewSet(
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return RecipeReadSerializer
-        else:
-            return self.serializer_class
+        return self.serializer_class
 
-    def annotate_queryset(self, queryset):
+    def get_queryset(self):
+        queryset = super().get_queryset()
         if self.request.user.is_authenticated:
             return queryset.annotate(
                 is_favorited=Exists(
@@ -164,57 +151,24 @@ class RecipeViewSet(
             is_in_shopping_cart=Value(False, output_field=BooleanField()),
         )
 
-    def get_queryset(self):
-        return self.annotate_queryset(super().get_queryset())
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        recipe = serializer.save(
+    def perform_create(self, serializer):
+        serializer.save(
             author=self.request.user,
         )
-        return Response(
-            RecipeReadSerializer(self.annotate_queryset(
-                Recipe.objects.filter(id=recipe.id)
-            ).first()).data,
-            status=status.HTTP_201_CREATED,
-        )
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            instance._prefetched_objects_cache = {}
-
-        return Response(
-            RecipeReadSerializer(self.annotate_queryset(
-                Recipe.objects.filter(id=instance.id)
-            ).first()).data,
-        )
-
-    def get_object(self):
-        if 'recipe_id' in self.kwargs:
-            self.kwargs['pk'] = self.kwargs['recipe_id']
-        return super().get_object()
 
     @action(
         detail=True,
         methods=['GET'],
         url_path='get-link',
     )
-    def get_link(self, request, *args, **kwargs):
+    def get_link(self, request, recipe_id):
+        get_object_or_404(Recipe, pk=recipe_id)
         return Response(
             {
                 'short-link': request.build_absolute_uri(
                     reverse(
-                        'short_link',
-                        kwargs={'recipe_id': kwargs['pk']},
+                        'recipes:short_link',
+                        args=[recipe_id],
                     )
                 )
             },
@@ -222,26 +176,21 @@ class RecipeViewSet(
         )
 
     def add_recipe_to_collection(self, collection_model, recipe):
-        collection_obj, created = collection_model.objects.get_or_create(
+        _, created = collection_model.objects.get_or_create(
             user=self.request.user,
             recipe=recipe,
         )
         if not created:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        collection_obj.save()
-        serializer = self.get_serializer(recipe)
+            raise ValidationError('Указан невалидный рецепт')
         return Response(
-            serializer.data,
+            self.get_serializer(recipe).data,
             status=status.HTTP_201_CREATED
         )
 
     def delete_recipe_from_collection(self, collection_model, recipe):
-        collection_object = collection_model.objects.filter(
-            user=self.request.user, recipe=recipe,
-        ).first()
-        if not collection_object:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        collection_object.delete()
+        get_object_or_404(
+            collection_model, user=self.request.user, recipe=recipe
+        ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def manage_recipe_collection(self, collection_model):
@@ -251,7 +200,7 @@ class RecipeViewSet(
                 collection_model=collection_model,
                 recipe=recipe,
             )
-        elif self.request.method == 'DELETE':
+        if self.request.method == 'DELETE':
             return self.delete_recipe_from_collection(
                 collection_model=collection_model,
                 recipe=recipe,
@@ -287,58 +236,27 @@ class RecipeViewSet(
                 )
             )
         )
-
-        # Формируем список рецептов
-        recipes_list = [
-            f'{cart.recipe.name} (Автор: {cart.recipe.author.username})'
-            for cart in shopping_carts
-        ]
-
-        # Получаем ID всех рецептов в корзине
         recipe_ids = shopping_carts.values_list('recipe_id', flat=True)
-
-        # Суммируем продукты
-        ingredients_summary = (
+        ingredients_summary = sorted(
             Ingredient.objects
             .filter(recipes__in=recipe_ids)
             .values(
                 product_name=F('product__name'),
                 unit=F('product__measurement_unit')
             )
-            .annotate(total=Sum('amount'))
+            .annotate(total=Sum('amount')),
+            key=lambda product: product['product_name'],
         )
-
-        # Форматируем результат
         products_dict = {
             (item['product_name'], item['unit']): item['total']
             for item in ingredients_summary
         }
-        return (products_dict, recipes_list)
-
-    def generate_ingredients_file_content(self, ingredients, recipes):
-        create_time = timezone.now().strftime(
-            'Время составления Списка: %H:%M %d.%m.%Y.'
+        return (
+            products_dict, [
+                f'{cart.recipe.name} (Автор: {cart.recipe.author.username})'
+                for cart in shopping_carts
+            ]
         )
-        products = []
-        for number, product in enumerate(sorted(
-            ingredients.keys(),
-            key=lambda product: product[0].lower(),
-        )):
-            amount = ingredients[product]
-            products.append(
-                f'{number+1}. '
-                f'{product[0].capitalize()}, '
-                f'{product[1]} - '
-                f'{amount}.'
-            )
-
-        return '\n'.join([
-            create_time,
-            'Необходимо купить следующие продукты:',
-            '\n'.join(products),
-            'Для блюд:',
-            '\n'.join(recipes) + '.',
-        ]).encode('utf-8')
 
     @action(
         detail=False,
@@ -349,11 +267,10 @@ class RecipeViewSet(
         products, recipes = self.get_combined_ingredients(
             user_id=self.request.user.pk
         )
-        file_content = self.generate_ingredients_file_content(
-            products, recipes
-        )
         return FileResponse(
-            BytesIO(file_content),
+            generate_ingredients_file_content(
+                products, recipes
+            ),
             as_attachment=True,
             filename='shopping_cart.txt',
             content_type='text/plain; charset=utf-8',
