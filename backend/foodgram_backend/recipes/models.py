@@ -3,7 +3,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from .constants import INGREDIENT_AMOUNT_MIN_VALUE, COOKING_TIME_MIN_VALUE
+from .constants import COOKING_TIME_MIN_VALUE, INGREDIENT_AMOUNT_MIN_VALUE
 
 
 class User(AbstractUser):

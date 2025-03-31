@@ -3,15 +3,11 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 
-from .filters import (
-    CookingTimeFilter, FollowersExistListFilter,
-    FollowsExistListFilter, IsProductInRecipesFilter,
-    RecipesExistListFilter
-)
-from .models import (
-    Favorite, Ingredient, Product, Recipe,
-    ShoppingCart, Tag, User,
-)
+from .filters import (CookingTimeFilter, FollowersExistListFilter,
+                      FollowsExistListFilter, IsProductInRecipesFilter,
+                      RecipesExistListFilter)
+from .models import (Favorite, Ingredient, Product, Recipe, ShoppingCart, Tag,
+                     User)
 
 site.unregister(Group)
 

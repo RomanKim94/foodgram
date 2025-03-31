@@ -1,36 +1,28 @@
 from django.contrib.auth import get_user_model
-from django.db.models import (
-    BooleanField, Exists, F, OuterRef,
-    Prefetch, Sum, Value
-)
+from django.db.models import (BooleanField, Exists, F, OuterRef, Prefetch, Sum,
+                              Value)
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters import rest_framework as filterset
 from djoser import views
+from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import (
-    Favorite, Follow, Ingredient, Product,
-    Recipe, ShoppingCart, Tag,
-)
 from .filters import ProductFilter, RecipeFilter
 from .paginators import UserPaginator
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (
-    AvatarUpdateSerializer, ProductSerializer,
-    RecipeCreateUpdateSerializer,
-    RecipePreviewSerializer, RecipeReadSerializer,
-    SubscriptionSerializer, TagSerializer,
-    UserSerializer,
-)
+from .serializers import (AvatarUpdateSerializer, ProductSerializer,
+                          RecipeCreateUpdateSerializer,
+                          RecipePreviewSerializer, RecipeReadSerializer,
+                          SubscriptionSerializer, TagSerializer,
+                          UserSerializer)
 from .utils import generate_ingredients_file_content
 
 User = get_user_model()
