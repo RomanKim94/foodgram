@@ -1,3 +1,5 @@
+![Индикатор состояния](https://github.com/RomanKim94/foodgram/actions/workflows/main.yml/badge.svg)
+
 IP сервера: 84.201.140.180  
 Доменное имя: [Главная страница](roman-foodgram.zapto.org)
 
