@@ -56,7 +56,7 @@ class IsProductInRecipesFilter(BaseListFilter):
         ('no', 'Нет'),
         ('yes', 'Есть')
     ]
-    filter_field = 'ingredients__recipes__isnull'
+    filter_field = 'recipes__isnull'
 
 
 class CookingTimeFilter(admin.SimpleListFilter):

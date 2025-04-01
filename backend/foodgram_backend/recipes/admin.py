@@ -1,4 +1,6 @@
-from django.contrib.admin import ModelAdmin, display, register, site
+from django.contrib.admin import (
+    ModelAdmin, StackedInline, display, register, site
+)
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
@@ -88,28 +90,30 @@ class ProductAdmin(ModelAdmin):
 
     @display(description='Рецептов')
     def recipes_count(self, product):
-        return Recipe.objects.filter(ingredients__product=product).count()
+        return product.recipes.count()
 
 
 @register(Ingredient)
 class IngredientAdmin(ModelAdmin):
-    list_display = ('ingredient_name', 'amount')
+    list_display = ('product', 'amount', 'recipe')
 
-    @display(description='Название')
-    def ingredient_name(self, ingredient):
-        return ingredient.product.name
+
+class IngredientInline(StackedInline):
+    model = Ingredient
+    extra = 1
 
 
 @register(Recipe)
 class RecipeAdmin(ModelAdmin):
     list_display = (
         'id', 'name', 'author', 'cooking_time',
-        'recipe_tags', 'products', 'recipe_image',
+        'recipe_tags', 'ingredients', 'recipe_image',
     )
     readonly_fields = ('favorited_count', )
     search_fields = ('name', 'author__first_name')
     list_filter = (CookingTimeFilter, 'tags', 'author')
     list_display_links = ('name', )
+    inlines = [IngredientInline]
 
     @display(description='В избранном')
     def favorited_count(self, recipe):
@@ -117,13 +121,13 @@ class RecipeAdmin(ModelAdmin):
 
     @display(description='Продукты')
     @mark_safe
-    def products(self, recipe):
+    def ingredients(self, recipe):
         return '<br />'.join(
             f'{ingredient.product.name}, '
             f'{ingredient.product.measurement_unit} - '
             f'{ingredient.amount}'
             for ingredient in recipe.ingredients.all(
-            ).select_related('product')
+            )
         )
 
     @display(description='Теги')
