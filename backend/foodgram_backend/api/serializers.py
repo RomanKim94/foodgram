@@ -3,7 +3,9 @@ from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from recipes.constants import COOKING_TIME_MIN_VALUE
+from recipes.constants import (
+    COOKING_TIME_MIN_VALUE, INGREDIENT_AMOUNT_MIN_VALUE
+)
 from recipes.models import Ingredient, Product, Recipe, Tag
 
 User = get_user_model()
@@ -106,6 +108,15 @@ class IngredientWriteSerializer(serializers.ModelSerializer):
             context=self.context
         ).to_representation(instance)
 
+    def validate_amount(self, value):
+        if value < INGREDIENT_AMOUNT_MIN_VALUE:
+            return serializers.ValidationError(
+                'Значение должно быть не меньше {amount_min_limit}'.format(
+                    amount_min_limit=INGREDIENT_AMOUNT_MIN_VALUE,
+                )
+            )
+        return value
+
 
 class IngredientReadSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='product.id')
@@ -191,13 +202,13 @@ class RecipeCreateUpdateSerializer(RecipeReadSerializer):
         return super().validate(attrs)
 
     def set_ingredients(self, recipe, ingredients_data):
-        Ingredient.objects.bulk_create([
+        Ingredient.objects.bulk_create(
             Ingredient(
                 product=ingredient['id'],
                 amount=ingredient['amount'],
                 recipe=recipe,
             ) for ingredient in ingredients_data
-        ])
+        )
 
     def update(self, instance: Recipe, validated_data):
         instance.ingredients.clear()

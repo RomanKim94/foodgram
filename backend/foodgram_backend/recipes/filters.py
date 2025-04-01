@@ -78,7 +78,7 @@ class CookingTimeFilter(admin.SimpleListFilter):
         }
 
     def filter_by_range(self, recipes, keyword):
-        minimal, maximum = self.limits_values.get(keyword, (None, None))
+        minimal, maximum = self.limits_values[keyword]
         return recipes.filter(cooking_time__range=(minimal, maximum))
 
     def lookups(self, request, model_admin):

@@ -82,15 +82,11 @@ class TagAdmin(RecipeCountMixin, ModelAdmin):
 
 
 @register(Product)
-class ProductAdmin(ModelAdmin):
+class ProductAdmin(RecipeCountMixin, ModelAdmin):
     list_display = ('name', 'measurement_unit', 'recipes_count')
     search_fields = ('name', 'measurement_unit')
     filter_field = 'measurement_unit'
     list_filter = (IsProductInRecipesFilter, )
-
-    @display(description='Рецептов')
-    def recipes_count(self, product):
-        return product.recipes.count()
 
 
 @register(Ingredient)
@@ -134,7 +130,7 @@ class RecipeAdmin(ModelAdmin):
     @mark_safe
     def recipe_tags(self, recipe):
         return '<br />'.join(
-            f'{tag.name}'
+            tag.name
             for tag in recipe.tags.all()
         )
 

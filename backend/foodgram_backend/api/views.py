@@ -164,15 +164,15 @@ class RecipeViewSet(
         methods=['GET'],
         url_path='get-link',
     )
-    def get_link(self, request, recipe_id):
-        if not Recipe.objects.filter(pk=recipe_id).exists():
-            raise ValidationError(f'Рецепта с {recipe_id=} не существует')
+    def get_link(self, request, pk):
+        if not Recipe.objects.filter(pk=pk).exists():
+            raise ValidationError(f'Рецепта с {pk=} не существует')
         return Response(
             {
                 'short-link': request.build_absolute_uri(
                     reverse(
                         'recipes:short_link',
-                        args=[recipe_id],
+                        args=[pk],
                     )
                 )
             },

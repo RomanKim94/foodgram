@@ -1,8 +1,14 @@
 from datetime import datetime
+import locale
 
 PRODUCT_IN_SHOPPING_LIST_FORMAT = (
     '{number}. {product_name}, '
     '{measure} - {amount}'
+)
+
+locale.setlocale(
+    category=locale.LC_ALL,
+    locale="Russian"
 )
 
 
@@ -18,10 +24,11 @@ def generate_ingredients_file_content(ingredients, recipes):
 
     return '\n'.join([
         datetime.now().strftime(
-            'Время составления Списка: %H:%M %d.%m.%Y.'
+            'Дата составления списка: %d %B %Y.\n'
+            'Время составления списка: %H:%M'
         ),
         'Необходимо купить следующие продукты:',
         *products,
         'Для блюд:',
-        *[str(recipe) for recipe in recipes],
+        *[recipe.name for recipe in recipes],
     ])
