@@ -53,29 +53,29 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
 
-frontend_tests:
-  runs-on: ubuntu-22.04
-  if: github.ref == 'refs/heads/main'
-  steps:
-    - name: Check out the repo
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 2
-    - name: Check for frontend changes
-      id: check-frontend
-      uses: dorny/paths-filter@v2
-      with:
-        filters: |
-          frontend:
-            - 'frontend/**'
-    - name: Set up Node.js
-      if: steps.check-frontend.outputs.frontend == 'true'
-      uses: actions/setup-node@v3
-    - name: Install dependencies and run tests
-      if: steps.check-frontend.outputs.frontend == 'true'
-      run: |
-        cd frontend/
-        npm install --registry=https://registry.npmmirror.com --force
+  frontend_tests:
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Check for frontend changes
+        id: check-frontend
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+      - name: Set up Node.js
+        if: steps.check-frontend.outputs.frontend == 'true'
+        uses: actions/setup-node@v3
+      - name: Install dependencies and run tests
+        if: steps.check-frontend.outputs.frontend == 'true'
+        run: |
+          cd frontend/
+          npm install --registry=https://registry.npmmirror.com --force
 
   build_frontend_and_push_to_docker_hub:
     name: Push frontend Docker image to DockerHub
