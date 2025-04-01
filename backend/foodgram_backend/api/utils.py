@@ -6,10 +6,16 @@ PRODUCT_IN_SHOPPING_LIST_FORMAT = (
     '{measure} - {amount}'
 )
 
-locale.setlocale(
-    category=locale.LC_ALL,
-    locale="Russian"
-)
+try:
+    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Russian_Russia.1251')
+    except locale.Error:
+        print(
+            "Не удалось установить русскую локаль. "
+            "Проверьте доступные локали в системе."
+        )
 
 
 def generate_ingredients_file_content(ingredients, recipes):
