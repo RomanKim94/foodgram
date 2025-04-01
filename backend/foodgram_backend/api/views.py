@@ -245,18 +245,16 @@ class RecipeViewSet(
                 )
             )
         )
-        recipe_ids = shopping_carts.values_list('recipe_id', flat=True)
+        recipes_ids = shopping_carts.values_list('recipe', flat=True)
         ingredients = Ingredient.objects.filter(
-            recipes__in=recipe_ids,
+            recipe__in=recipes_ids,
         ).values(
             product_name=F('product__name'),
             unit=F('product__measurement_unit'),
         ).annotate(
             total=Sum('amount')
         ).order_by('product__name')
-        return ingredients, Recipe.objects.filter(
-            shoppingcarts__in=shopping_carts.values_list('id', flat=True)
-        )
+        return ingredients, Recipe.objects.filter(id__in=recipes_ids)
 
     @action(
         detail=False,
@@ -266,7 +264,7 @@ class RecipeViewSet(
     def download_shopping_cart(self, request, *args, **kwargs):
         return FileResponse(
             generate_ingredients_file_content(
-                self.get_combined_ingredients(
+                *self.get_combined_ingredients(
                     user=self.request.user
                 )
             ),
