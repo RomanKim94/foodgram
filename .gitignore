@@ -8,7 +8,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 api/migrations
-api/data
+/backend/foodgram_backend/api/data
 
 # C extensions
 *.so
