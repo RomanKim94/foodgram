@@ -33,6 +33,7 @@ class RecipeUserAdmin(RecipeCountMixin, UserAdmin):
         'followers_count',
         'follows_count',
     )
+    fieldsets = (*UserAdmin.fieldsets, (None, {'fields': ('avatar',)}))
     search_fields = ('email', 'first_name')
     list_filter = (
         RecipesExistListFilter,
@@ -49,6 +50,7 @@ class RecipeUserAdmin(RecipeCountMixin, UserAdmin):
                 'last_name',
                 'password1',
                 'password2',
+                'avatar',
             ),
         }),
     )
@@ -86,7 +88,7 @@ class ProductAdmin(RecipeCountMixin, ModelAdmin):
     list_display = ('name', 'measurement_unit', 'recipes_count')
     search_fields = ('name', 'measurement_unit')
     filter_field = 'measurement_unit'
-    list_filter = (IsProductInRecipesFilter, )
+    list_filter = (IsProductInRecipesFilter, 'measurement_unit')
 
 
 @register(Ingredient)
@@ -106,7 +108,7 @@ class RecipeAdmin(ModelAdmin):
         'recipe_tags', 'ingredients', 'recipe_image',
     )
     readonly_fields = ('favorited_count', )
-    search_fields = ('name', 'author__first_name')
+    search_fields = ('name', 'author__first_name', 'tags__name')
     list_filter = (CookingTimeFilter, 'tags', 'author')
     list_display_links = ('name', )
     inlines = [IngredientInline]

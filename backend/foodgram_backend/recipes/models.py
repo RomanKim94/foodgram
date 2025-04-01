@@ -130,8 +130,8 @@ class Ingredient(models.Model):
         return f'{self.product} - {self.amount}'
 
     class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
+        verbose_name = 'Продукт в рецептах'
+        verbose_name_plural = 'Продукты в рецептах'
         default_related_name = 'ingredients'
         ordering = ('product__name',)
 
@@ -163,7 +163,7 @@ class Recipe(models.Model):
         verbose_name='Теги',
     )
     cooking_time = models.IntegerField(
-        verbose_name='Время приготовления в минутах',
+        verbose_name='Время (мин)',
         validators=(
             MinValueValidator(COOKING_TIME_MIN_VALUE),
         ),
