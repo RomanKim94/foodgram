@@ -22,14 +22,14 @@ class Command(BaseCommand):
             file_path = kwargs['file_path']
             full_file_path = os.path.join(settings.BASE_DIR, file_path)
             with open(full_file_path, 'r', encoding='utf-8') as file:
-                created_ingredient_count = len(
+                created_objects_count = len(
                     self.model.objects.bulk_create(
                         (self.model(**item) for item in json.load(file)),
                         ignore_conflicts=True,
                     )
                 )
             self.stdout.write(
-                f'Успешно загружено {created_ingredient_count} '
+                f'Успешно загружено {created_objects_count} '
                 f'{self.model._meta.verbose_name_plural}'
             )
         except Exception as exception:
