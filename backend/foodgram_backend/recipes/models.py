@@ -12,7 +12,7 @@ class User(AbstractUser):
         verbose_name='Никнейм',
         max_length=150,
         unique=True,
-        validators=[UnicodeUsernameValidator],
+        validators=[UnicodeUsernameValidator()],
     )
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
