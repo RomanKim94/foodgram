@@ -40,10 +40,10 @@ docker compose -f docker-compose.production.yml up -d
 ```
 docker compose exec foodgram-backend python manage.py migrate
 ```
-5. Заполните БД с помощью подготовленных файлов:
+5. Чтобы заполнить БД с помощью подготовленных файлов:
 ```
-docker compose exec foodgram-backend python manage.py import_ingredients db_data/ingredients.json
-docker compose exec foodgram-backend python manage.py import_tags db_data/tags.json
+docker compose exec foodgram-backend python manage.py import_ingredients ../db_data/ingredients.json
+docker compose exec foodgram-backend python manage.py import_tags ../db_data/tags.json
 ```  
 6. Для доступа к админке потребуется суперпользователь. Создайте суперпользователя:
 ```
