@@ -42,8 +42,8 @@ docker compose exec foodgram-backend python manage.py migrate
 ```
 5. Заполните БД с помощью подготовленных файлов:
 ```
-docker compose exec foodgram-backend python manage.py import_ingredients api/data/ingredients.json
-docker compose exec foodgram-backend python manage.py import_tags api/data/tags.json
+docker compose exec foodgram-backend python manage.py import_ingredients db_data/ingredients.json
+docker compose exec foodgram-backend python manage.py import_tags db_data/tags.json
 ```  
 6. Для доступа к админке потребуется суперпользователь. Создайте суперпользователя:
 ```
@@ -79,8 +79,8 @@ python manage.py migrate
 ```
 Заполните БД с помощью подготовленных файлов:
 ```
-python manage.py import_ingredients api/data/ingredients.json
-python manage.py import_tags api/data/tags.json
+python manage.py import_ingredients ../../data/ingredients.json
+python manage.py import_tags ../../data/tags.json
 ```
 Запустите сервер:
 ```

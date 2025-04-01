@@ -35,6 +35,6 @@ class Command(BaseCommand):
         except Exception as exception:
             self.stdout.write(
                 f'Во время импорта {self.model._meta.verbose_name_plural} '
-                f'из файла {file_path}'
+                f'из файла {file_path} '
                 f'произошла ошибка: {exception}'
             )
