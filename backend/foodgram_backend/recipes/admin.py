@@ -33,7 +33,10 @@ class RecipeUserAdmin(RecipeCountMixin, UserAdmin):
         'followers_count',
         'follows_count',
     )
-    fieldsets = (*UserAdmin.fieldsets, (None, {'fields': ('avatar',)}))
+    fieldsets = (*UserAdmin.fieldsets, (None, {'fields': (
+        'avatar_image', 'avatar'
+    )}))
+    readonly_fields = ('avatar_image',)
     search_fields = ('email', 'first_name')
     list_filter = (
         RecipesExistListFilter,
@@ -59,7 +62,7 @@ class RecipeUserAdmin(RecipeCountMixin, UserAdmin):
     def full_name(self, user):
         return f'{user.first_name} {user.last_name}'.strip()
 
-    @display(description='Аватар')
+    @display(description='Аватара')
     @mark_safe
     def avatar_image(self, user):
         return (

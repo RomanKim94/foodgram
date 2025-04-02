@@ -98,6 +98,7 @@ class IngredientWriteSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(),
     )
+    amount = serializers.IntegerField(min_value=INGREDIENT_AMOUNT_MIN_VALUE)
 
     class Meta:
         model = Ingredient
@@ -107,15 +108,6 @@ class IngredientWriteSerializer(serializers.ModelSerializer):
         return IngredientReadSerializer(
             context=self.context
         ).to_representation(instance)
-
-    def validate_amount(self, value):
-        if value < INGREDIENT_AMOUNT_MIN_VALUE:
-            return serializers.ValidationError(
-                'Значение должно быть не меньше {amount_min_limit}'.format(
-                    amount_min_limit=INGREDIENT_AMOUNT_MIN_VALUE,
-                )
-            )
-        return value
 
 
 class IngredientReadSerializer(serializers.ModelSerializer):

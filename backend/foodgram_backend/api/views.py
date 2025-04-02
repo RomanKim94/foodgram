@@ -11,6 +11,7 @@ from recipes.models import (Favorite, Follow, Ingredient, Product, Recipe,
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
@@ -95,7 +96,7 @@ class AccountViewSet(views.UserViewSet):
     def subscriptions(self, request):
         return self.get_paginated_response(self.get_serializer(
             self.paginate_queryset(
-                User.objects.filter(followers__follower=request.user)
+                User.objects.filter(authors__follower=request.user)
             ),
             many=True,
             context={'request': request},
@@ -126,6 +127,7 @@ class RecipeViewSet(
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
     filter_backends = (filterset.DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
